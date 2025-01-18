@@ -1,9 +1,14 @@
 require('dotenv').config();
+const express = require('express');
 // https://expressjs.com/en/starter/basic-routing.html
 
+const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
+
+// middleware
+app.use(cors());
 
 
 
