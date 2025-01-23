@@ -39,8 +39,6 @@ async function run() {
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
 
-        //   const database = client.db('');
-        //   const equipmentCollection = database.collection('equipment');
 
         const userCollection = client.db("GrandGatewayDB").collection("users");
 
@@ -49,6 +47,7 @@ async function run() {
         app.post('/jwt', async (req, res) => {
             const user = req.body;
             const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            console.log(token);
             res.send({ token });
         })
 
@@ -68,8 +67,19 @@ async function run() {
             })
         }
 
+        // use verify admin after verifyToken
+        const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email;
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            const isAdmin = user?.role === 'admin';
+            if (!isAdmin) {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+            next();
+        }
 
-        
+
 
         app.get('/users', async (req, res) => {
             const result = await userCollection.find().toArray();
