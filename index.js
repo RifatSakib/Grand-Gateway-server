@@ -80,6 +80,21 @@ async function run() {
         }
 
 
+        // verify Deliveryman
+
+        const verifyDeliveryman = async (req, res, next) => {
+            const email = req.decoded.email;
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            const isDeliveryman = user?.role === 'deliveryman';
+            if (!isDeliveryman) {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+            next();
+        }
+
+
+
 
         app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
             const result = await userCollection.find().toArray();
@@ -136,6 +151,40 @@ async function run() {
             res.send(result);
         })
 
+
+
+
+
+        // for deliveryman
+
+        app.get('/users/deliveryman/:email', verifyToken, async (req, res) => {
+            const email = req.params.email;
+
+            if (email !== req.decoded.email) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            let deliveryman = false;
+            if (user) {
+                deliveryman = user?.role === 'deliveryman';
+            }
+            res.send({ deliveryman });
+        })
+
+
+        app.patch('/users/deliveryman/:id', verifyToken,verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    role: 'deliveryman'
+                }
+            }
+            const result = await userCollection.updateOne(filter, updatedDoc);
+            res.send(result);
+        })
 
 
 
