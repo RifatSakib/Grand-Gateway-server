@@ -41,6 +41,7 @@ async function run() {
 
 
         const userCollection = client.db("GrandGatewayDB").collection("users");
+        const bookCollection = client.db("GrandGatewayDB").collection("book");
 
 
         // jwt related api
@@ -185,6 +186,20 @@ async function run() {
             const result = await userCollection.updateOne(filter, updatedDoc);
             res.send(result);
         })
+
+
+
+
+        // booking data
+
+        app.post('/book', async (req, res) => {
+            const item = req.body;
+            const result = await bookCollection.insertOne(item);
+            res.send(result);
+          });
+
+         
+
 
 
 
