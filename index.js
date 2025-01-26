@@ -210,6 +210,31 @@ async function run() {
             res.send(result);
           })
 
+          app.patch('/book/:id', async (req, res) => {
+            const item = req.body;
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const updatedDoc = {
+              $set: {
+                name: item.name,
+                email: item.email,
+                price: item.price,
+                phone: item.phone,
+                parcelType: item.parcelType,
+                parcelWeight: item.parcelWeight,
+                receiverName: item.receiverName,
+                receiverPhoneNumber: item.receiverPhoneNumber,
+                parcelDeliveryAddress: item.parcelDeliveryAddress,
+                requestedDeliveryDate: item.requestedDeliveryDate,
+                deliveryAddressLatitude: item.deliveryAddressLatitude,
+                deliveryAddresslongitude: item.deliveryAddresslongitude,
+              }
+            }
+      
+            const result = await bookCollection.updateOne(filter, updatedDoc)
+            res.send(result);
+          })
+
 
 
     } finally {
