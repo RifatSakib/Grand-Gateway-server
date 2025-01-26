@@ -198,7 +198,10 @@ async function run() {
             res.send(result);
           });
 
-         
+          app.get('/book', async (req, res) => {
+            const result = await bookCollection.find().toArray();
+            res.send(result);
+          });
 
 
 
