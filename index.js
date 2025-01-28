@@ -97,11 +97,16 @@ async function run() {
 
 
 
+        // app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
+        //     const result = await userCollection.find().toArray();
+        //     res.send(result);
+        // });
+
+        
         app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
             const result = await userCollection.find().toArray();
             res.send(result);
         });
-
 
         app.get('/users/admin/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
@@ -175,7 +180,7 @@ async function run() {
         })
 
 
-        app.patch('/users/deliveryman/:id', verifyToken,verifyAdmin, async (req, res) => {
+        app.patch('/users/deliveryman/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const updatedDoc = {
@@ -188,52 +193,76 @@ async function run() {
         })
 
 
-
-
-        // booking data
-
-        app.post('/book', async (req, res) => {
-            const item = req.body;
-            const result = await bookCollection.insertOne(item);
-            res.send(result);
-          });
-
-          app.get('/book', async (req, res) => {
-            const result = await bookCollection.find().toArray();
-            res.send(result);
-          });
-
-          app.get('/book/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: new ObjectId(id) }
-            const result = await bookCollection.findOne(query);
-            res.send(result);
-          })
-
-          app.patch('/book/:id', async (req, res) => {
+        // image upload update
+        app.patch('/users/:id', verifyToken, async (req, res) => {
             const item = req.body;
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) }
             const updatedDoc = {
-              $set: {
-                name: item.name,
-                email: item.email,
-                price: item.price,
-                phone: item.phone,
-                parcelType: item.parcelType,
-                parcelWeight: item.parcelWeight,
-                receiverName: item.receiverName,
-                receiverPhoneNumber: item.receiverPhoneNumber,
-                parcelDeliveryAddress: item.parcelDeliveryAddress,
-                requestedDeliveryDate: item.requestedDeliveryDate,
-                deliveryAddressLatitude: item.deliveryAddressLatitude,
-                deliveryAddresslongitude: item.deliveryAddresslongitude,
-              }
+                $set: {
+                    image: item.image
+                }
             }
-      
+
+            const result = await userCollection.updateOne(filter, updatedDoc)
+            res.send(result);
+        })
+
+
+
+        // booking data
+
+        app.post('/book', verifyToken, async (req, res) => {
+            const item = req.body;
+            const result = await bookCollection.insertOne(item);
+            res.send(result);
+        });
+
+        app.get('/book',verifyToken, async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const result = await bookCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        app.get('/book/:id', verifyToken, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await bookCollection.findOne(query);
+            res.send(result);
+        })
+
+        app.patch('/book/:id', verifyToken, async (req, res) => {
+            const item = req.body;
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    name: item.name,
+                    email: item.email,
+                    price: item.price,
+                    phone: item.phone,
+                    parcelType: item.parcelType,
+                    parcelWeight: item.parcelWeight,
+                    receiverName: item.receiverName,
+                    receiverPhoneNumber: item.receiverPhoneNumber,
+                    parcelDeliveryAddress: item.parcelDeliveryAddress,
+                    requestedDeliveryDate: item.requestedDeliveryDate,
+                    deliveryAddressLatitude: item.deliveryAddressLatitude,
+                    deliveryAddresslongitude: item.deliveryAddresslongitude,
+                }
+            }
+
             const result = await bookCollection.updateOne(filter, updatedDoc)
             res.send(result);
-          })
+        })
+
+
+
+
+
+
+
 
 
 
