@@ -30,6 +30,7 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
+
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -42,12 +43,13 @@ async function run() {
 
         const userCollection = client.db("GrandGatewayDB").collection("users");
         const bookCollection = client.db("GrandGatewayDB").collection("book");
+        const reviewCollection = client.db("GrandGatewayDB").collection("review");
 
 
         // jwt related api
         app.post('/jwt', async (req, res) => {
             const user = req.body;
-            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '365d' });
             // console.log(token);
             res.send({ token });
         })
@@ -102,11 +104,28 @@ async function run() {
         //     res.send(result);
         // });
 
+
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            // insert email if user doesnt exists: 
+            // you can do this many ways (1. email unique, 2. upsert 3. simple checking)
+            const query = { email: user.email }
+            const existingUser = await userCollection.findOne(query);
+            if (existingUser) {
+                return res.send({ message: 'user already exists', insertedId: null })
+            }
+            const result = await userCollection.insertOne(user);
+            res.send(result);
+        });
+
+        // get all the users
         
         app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
             const result = await userCollection.find().toArray();
             res.send(result);
         });
+
+
 
         app.get('/users/admin/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
@@ -125,19 +144,8 @@ async function run() {
         })
 
 
-        app.post('/users', async (req, res) => {
-            const user = req.body;
-            // insert email if user doesnt exists: 
-            // you can do this many ways (1. email unique, 2. upsert 3. simple checking)
-            const query = { email: user.email }
-            const existingUser = await userCollection.findOne(query);
-            if (existingUser) {
-                return res.send({ message: 'user already exists', insertedId: null })
-            }
-            const result = await userCollection.insertOne(user);
-            res.send(result);
-        });
-
+        
+        // make role to admin
         app.patch('/users/admin/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
@@ -150,6 +158,8 @@ async function run() {
             res.send(result);
         })
 
+
+        // delete one user
         app.delete('/users/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
@@ -162,7 +172,6 @@ async function run() {
 
 
         // for deliveryman
-
         app.get('/users/deliveryman/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
 
@@ -191,6 +200,16 @@ async function run() {
             const result = await userCollection.updateOne(filter, updatedDoc);
             res.send(result);
         })
+
+        // get all the delivery man for admin
+        app.get('/users/deliverymen', verifyToken, verifyAdmin, async (req, res) => {
+            try {
+                const deliverymen = await userCollection.find({ role: 'deliveryman' }).toArray();
+                res.send(deliverymen);
+            } catch (error) {
+                res.status(500).send({ message: 'Error retrieving deliverymen', error });
+            }
+        });
 
 
         // image upload update
@@ -225,6 +244,16 @@ async function run() {
             res.send(result);
         });
 
+          // get all the booking for admin
+        
+          app.get('/book/all',verifyToken,verifyAdmin, async (req, res) => {
+            const result = await bookCollection.find().toArray();
+            console.log(result)
+            res.send(result);
+        });
+
+
+
         app.get('/book/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
@@ -238,18 +267,11 @@ async function run() {
             const filter = { _id: new ObjectId(id) }
             const updatedDoc = {
                 $set: {
-                    name: item.name,
-                    email: item.email,
-                    price: item.price,
-                    phone: item.phone,
-                    parcelType: item.parcelType,
-                    parcelWeight: item.parcelWeight,
-                    receiverName: item.receiverName,
-                    receiverPhoneNumber: item.receiverPhoneNumber,
-                    parcelDeliveryAddress: item.parcelDeliveryAddress,
-                    requestedDeliveryDate: item.requestedDeliveryDate,
-                    deliveryAddressLatitude: item.deliveryAddressLatitude,
-                    deliveryAddresslongitude: item.deliveryAddresslongitude,
+                 
+                    deliveryMan_Id : item.deliveryMan_Id,
+                    approximateDate : item.approximateDate,
+                    status : "In Progress",
+                  
                 }
             }
 
