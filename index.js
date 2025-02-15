@@ -269,13 +269,7 @@ async function run() {
             res.send(result);
         })
 
-        // app.get('/book/AllBookByDeliveryId/:id', verifyToken, async (req, res) => {
-        //     const id = req.params.id;
-        //     console.log(id)
-        //     // const query = { _id: new ObjectId(id) }
-        //     const result = await bookCollection.find({ deliveryMan_Id: id }).toArray();
-        //     res.send(result);
-        // })
+      
 
         app.get('/book/AllBookByDeliveryId/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
@@ -312,6 +306,21 @@ async function run() {
                     status: "In Progress",
 
                 }
+            }
+
+            const result = await bookCollection.updateOne(filter, updatedDoc)
+            res.send(result);
+        })
+
+
+        app.patch('/book/cancel/:id', verifyToken, async (req, res) => {
+            // const item = req.body;
+            const id = req.params.id;
+            console.log(id)
+            const filter = { _id: new ObjectId(id) }
+            const updatedDoc = {
+                $set: {status: "cancel"}
+               
             }
 
             const result = await bookCollection.updateOne(filter, updatedDoc)
