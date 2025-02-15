@@ -119,7 +119,7 @@ async function run() {
         });
 
         // get all the users
-        
+
         app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
             const result = await userCollection.find().toArray();
             res.send(result);
@@ -144,7 +144,7 @@ async function run() {
         })
 
 
-        
+
         // make role to admin
         app.patch('/users/admin/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
@@ -188,6 +188,14 @@ async function run() {
             res.send({ deliveryman });
         })
 
+
+        // MyDeliverylist  er just _id pawar jonno banano
+        app.get('/users/oneDeliveryman/:email', verifyToken, async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            res.send({ user });
+        })
 
         app.patch('/users/deliveryman/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
@@ -237,16 +245,16 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/book',verifyToken, async (req, res) => {
+        app.get('/book', verifyToken, async (req, res) => {
             const email = req.query.email;
             const query = { email: email };
             const result = await bookCollection.find(query).toArray();
             res.send(result);
         });
 
-          // get all the booking for admin
-        
-          app.get('/book/all',verifyToken,verifyAdmin, async (req, res) => {
+        // get all the booking for admin
+
+        app.get('/book/all', verifyToken, verifyAdmin, async (req, res) => {
             const result = await bookCollection.find().toArray();
             console.log(result)
             res.send(result);
@@ -261,17 +269,48 @@ async function run() {
             res.send(result);
         })
 
+        // app.get('/book/AllBookByDeliveryId/:id', verifyToken, async (req, res) => {
+        //     const id = req.params.id;
+        //     console.log(id)
+        //     // const query = { _id: new ObjectId(id) }
+        //     const result = await bookCollection.find({ deliveryMan_Id: id }).toArray();
+        //     res.send(result);
+        // })
+
+        app.get('/book/AllBookByDeliveryId/:id', verifyToken, async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+                try {
+                    const result = await bookCollection.find({ deliveryMan_Id: id }).toArray();
+                    if(result){
+                        // console.log(result)
+                        res.send(result);
+                    }
+
+                    else{
+                        res.send("not found");
+                    }
+                } catch (error) {
+                    console.error(error);
+                    res.status(500).send({ error: 'An error occurred while fetching books.' });
+                }
+         
+            
+           
+        });
+        
+
         app.patch('/book/:id', verifyToken, async (req, res) => {
             const item = req.body;
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) }
             const updatedDoc = {
                 $set: {
-                 
-                    deliveryMan_Id : item.deliveryMan_Id,
-                    approximateDate : item.approximateDate,
-                    status : "In Progress",
-                  
+
+                    deliveryMan_Id: item.deliveryMan_Id,
+                    approximateDate: item.approximateDate,
+                    status: "In Progress",
+
                 }
             }
 
