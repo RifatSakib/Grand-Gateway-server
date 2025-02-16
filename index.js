@@ -303,7 +303,7 @@ async function run() {
 
                     deliveryMan_Id: item.deliveryMan_Id,
                     approximateDate: item.approximateDate,
-                    status: "In Progress",
+                    status: "On The Way",
 
                 }
             }
@@ -319,7 +319,22 @@ async function run() {
             console.log(id)
             const filter = { _id: new ObjectId(id) }
             const updatedDoc = {
-                $set: {status: "cancel"}
+                $set: {status: "canceled"}
+               
+            }
+
+            const result = await bookCollection.updateOne(filter, updatedDoc)
+            res.send(result);
+        })
+
+
+        app.patch('/book/deliver/:id', verifyToken, async (req, res) => {
+            // const item = req.body;
+            const id = req.params.id;
+            console.log(id)
+            const filter = { _id: new ObjectId(id) }
+            const updatedDoc = {
+                $set: {status: "delivered"}
                
             }
 
@@ -329,8 +344,22 @@ async function run() {
 
 
 
+        // review section
 
 
+        app.post('/review', verifyToken, async (req, res) => {
+            const item = req.body;
+            const result = await reviewCollection.insertOne(item);
+            res.send(result);
+        });
+
+
+
+        app.get('/review/:id', verifyToken, async (req, res) => {
+            const id = req.params.id;
+            const result = await reviewCollection.find({ deliveryManID: id }).toArray();
+            res.send(result);
+        })
 
 
 
