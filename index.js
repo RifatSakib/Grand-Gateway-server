@@ -269,30 +269,30 @@ async function run() {
             res.send(result);
         })
 
-      
+
 
         app.get('/book/AllBookByDeliveryId/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
             console.log(id);
-                try {
-                    const result = await bookCollection.find({ deliveryMan_Id: id }).toArray();
-                    if(result){
-                        // console.log(result)
-                        res.send(result);
-                    }
-
-                    else{
-                        res.send("not found");
-                    }
-                } catch (error) {
-                    console.error(error);
-                    res.status(500).send({ error: 'An error occurred while fetching books.' });
+            try {
+                const result = await bookCollection.find({ deliveryMan_Id: id }).toArray();
+                if (result) {
+                    // console.log(result)
+                    res.send(result);
                 }
-         
-            
-           
+
+                else {
+                    res.send("not found");
+                }
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({ error: 'An error occurred while fetching books.' });
+            }
+
+
+
         });
-        
+
 
         app.patch('/book/:id', verifyToken, async (req, res) => {
             const item = req.body;
@@ -319,8 +319,8 @@ async function run() {
             console.log(id)
             const filter = { _id: new ObjectId(id) }
             const updatedDoc = {
-                $set: {status: "canceled"}
-               
+                $set: { status: "canceled" }
+
             }
 
             const result = await bookCollection.updateOne(filter, updatedDoc)
@@ -334,8 +334,8 @@ async function run() {
             console.log(id)
             const filter = { _id: new ObjectId(id) }
             const updatedDoc = {
-                $set: {status: "delivered"}
-               
+                $set: { status: "delivered" }
+
             }
 
             const result = await bookCollection.updateOne(filter, updatedDoc)
@@ -362,7 +362,162 @@ async function run() {
         })
 
 
+        // aggregation
 
+     
+
+        // app.get('/api/deliverymen', async (req, res) => {
+        //     try {
+        //         const users = await userCollection.find({ role: 'deliveryman' }).toArray();
+        //         const deliveryMen = await userCollection.aggregate([
+        //             {
+        //                 $match: { role: 'deliveryman' } // Ensure we only get deliverymen
+        //             },
+            
+
+        //             {
+        //                 $addFields: {
+        //                   _id: { $toString: '$_id' }, //convert plantId string field to objectId field
+                   
+
+                        
+        //                 },
+        //               },
+                      
+        //             {
+        //                 $lookup: {
+        //                     from: 'book', // Ensure this matches the actual collection name
+        //                     localField: '_id',
+        //                     foreignField: 'deliveryMan_Id', // Ensure this matches the field in the book collection
+        //                     as: 'books'
+        //                 }
+        //             },
+        //             {
+        //                 $lookup: {
+        //                     from: 'review', // Ensure this matches the actual collection name
+        //                     localField: '_id',
+        //                     foreignField: 'deliveryManID', // Ensure this matches the field in the review collection
+        //                     as: 'reviews'
+        //                 }
+        //             },
+        //             {
+        //                 $unwind: '$books'
+        //             },
+        //             {
+        //                $unwind: '$reviews'
+        //             },
+        //             {
+        //                 $addFields: {
+        //                     phone: '$books.phone',
+        //                     price: '$books.price',
+        //                     ratings: { $avg: { $toDouble: '$reviews.ratings' } } ,
+        //                     feedBack: '$reviews.feedBack',
+        //                     books: '$books'
+        //                 }
+        //             },
+        //             {
+        //                 $project: {
+        //                     phone: 1,
+        //                     price: 1, // Ensure this field exists in the user collection
+        //                     ratings: { $round: ['$ratings', 1] },
+        //                     feedBack: 1,
+        //                     books:1
+        //                 }
+        //             }
+        //         ]).toArray();
+        
+        //         res.send({
+                    
+        //             users,
+        //             deliveryMen,
+                
+        //         });
+        //     } catch (error) {
+        //         console.error('Aggregation error:', error); // Log the error for debugging
+        //         res.status(500).json({ message: 'Server error' });
+        //     }
+        // });
+
+        app.get('/api/deliverymen', async (req, res) => {
+            try {
+                // const users = await userCollection.find({ role: 'deliveryman' }).toArray();
+                const deliveryMen = await userCollection.aggregate([
+                    {
+                        $match: { role: 'deliveryman' } // Ensure we only get deliverymen
+                    },
+            
+
+                    {
+                        $addFields: {
+                          _id: { $toString: '$_id' }, //convert plantId string field to objectId field
+                   
+
+                        
+                        },
+                      },
+                      
+                    {
+                        $lookup: {
+                            from: 'book', // Ensure this matches the actual collection name
+                            localField: '_id',
+                            foreignField: 'deliveryMan_Id', // Ensure this matches the field in the book collection
+                            as: 'books'
+                        }
+                    },
+                   
+
+                    {
+                        $project: {
+                          name: 1, // Assuming deliveryBoy has a 'name' field
+                          email: 1,
+                          deliveredCount: {
+                            $size: {
+                              $filter: {
+                                input: "$books",
+                                as: "booking",
+                                cond: { $eq: ["$$booking.status", "delivered"] }
+                              }
+                            }
+                          }
+                        }
+                      },
+
+                    {
+                        $lookup: {
+                            from: 'review', // Ensure this matches the actual collection name
+                            localField: '_id',
+                            foreignField: 'deliveryManID', // Ensure this matches the field in the review collection
+                            as: 'reviews'
+                        }
+                    },
+
+                    {
+                        $project: {
+                          name: 1, // Assuming deliveryBoy has a 'name' field
+                          email: 1,
+                          deliveredCount: 1,
+                          averageRating: {
+                            $avg: {
+                              $map: {
+                                input: "$reviews",
+                                as: "review",
+                                in: { $toDouble: "$$review.ratings" } // Convert string to number
+                              }
+                            }
+                          }
+                        }
+                      },
+
+
+                ]).toArray();
+        
+                res.send(deliveryMen);
+            } catch (error) {
+                console.error('Aggregation error:', error); // Log the error for debugging
+                res.status(500).json({ message: 'Server error' });
+            }
+        });
+       
 
 
     } finally {
