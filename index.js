@@ -517,7 +517,57 @@ async function run() {
                 res.status(500).json({ message: 'Server error' });
             }
         });
+
+
+        // bar chart data
+        app.get('/api/bookings-by-date', async (req, res) => {
+            try {
+                const bookings = await bookCollection.aggregate([
+                    {
+                        $group: {
+                            _id: "$bookingDate", // Group by requested delivery date
+                            totalBookings: { $sum: 1 } // Count the number of bookings for each date
+                        }
+                    },
+                    {
+                        $sort: { _id: 1 } // Sort by date
+                    }
+                ]).toArray();
+        
+                res.json(bookings);
+            } catch (error) {
+                console.error('Error fetching bookings by date:', error);
+                res.status(500).json({ message: 'Server error' });
+            }
+        });
        
+
+        // line chart
+        app.get('/api/bookings-and-deliveries-by-date', async (req, res) => {
+            try {
+                const bookings = await bookCollection.aggregate([
+                    {
+                        $group: {
+                            _id: "$requestedDeliveryDate", // Group by requested delivery date
+                            totalBookings: { $sum: 1 }, // Count the number of bookings for each date
+                            totalDelivered: {
+                                $sum: {
+                                    $cond: [{ $eq: ["$status", "delivered"] }, 1, 0] // Count delivered parcels
+                                }
+                            }
+                        }
+                    },
+                    {
+                        $sort: { _id: 1 } // Sort by date
+                    }
+                ]).toArray();
+        
+                res.json(bookings);
+            } catch (error) {
+                console.error('Error fetching bookings and deliveries by date:', error);
+                res.status(500).json({ message: 'Server error' });
+            }
+        });
 
 
     } finally {
