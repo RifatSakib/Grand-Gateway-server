@@ -252,6 +252,16 @@ async function run() {
             res.send(result);
         });
 
+        app.get('/book/email/:email',  verifyToken,async (req, res) => {
+            const email = req.params.email;
+            try {
+                const result = await bookCollection.find({ email: email }).toArray();
+                res.send(result);
+            } catch (error) {
+                console.error('Error fetching tutorials by category:', error);
+                res.status(500).send('Internal Server Error');
+            }
+        });
         // get all the booking for admin
 
         app.get('/book/all', verifyToken, verifyAdmin, async (req, res) => {
@@ -266,6 +276,23 @@ async function run() {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await bookCollection.findOne(query);
+            res.send(result);
+        })
+        
+
+        app.put('/book/:id', verifyToken,async (req, res) => {
+            const id = req.params.id;
+
+            // https://www.mongodb.com/docs/drivers/node/current/usage-examples/updateOne/
+
+            const filter = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: req.body
+            }
+
+            const result = await bookCollection.updateOne(filter, updatedDoc, options)
+            console.log(result)
             res.send(result);
         })
 
