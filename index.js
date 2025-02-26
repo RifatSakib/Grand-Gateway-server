@@ -497,6 +497,7 @@ async function run() {
                         $project: {
                           name: 1, // Assuming deliveryBoy has a 'name' field
                           email: 1,
+                          phone: 1,
                           deliveredCount: {
                             $size: {
                               $filter: {
@@ -522,6 +523,7 @@ async function run() {
                         $project: {
                           name: 1, // Assuming deliveryBoy has a 'name' field
                           email: 1,
+                          phone: 1,
                           deliveredCount: 1,
                           averageRating: {
                             $avg: {
@@ -595,6 +597,45 @@ async function run() {
                 res.status(500).json({ message: 'Server error' });
             }
         });
+
+
+
+
+
+        app.get('/api/users-with-bookings', async (req, res) => {
+            try {
+                const users = await userCollection.aggregate([
+                    {
+                        $addFields: {
+                            _id: { $toString: '$_id' } // Convert _id to string for compatibility
+                        }
+                    },
+                    {
+                        $lookup: {
+                            from: 'book', // Ensure this matches the actual collection name
+                            localField: 'email', // Match users based on email
+                            foreignField: 'email', // Email field in bookCollection
+                            as: 'bookings' // Store matched bookings in an array
+                        }
+                    },
+                    {
+                        $project: {
+                            name: 1,
+                            email: 1,
+                            phone: 1,
+                            role: 1,
+                            bookedCount: { $size: "$bookings" } // Count the number of bookings
+                        }
+                    }
+                ]).toArray();
+        
+                res.send(users);
+            } catch (error) {
+                console.error('Aggregation error:', error);
+                res.status(500).json({ message: 'Server error' });
+            }
+        });
+        
 
 
     } finally {
