@@ -391,81 +391,7 @@ async function run() {
 
         // aggregation
 
-     
-
-        // app.get('/api/deliverymen', async (req, res) => {
-        //     try {
-        //         const users = await userCollection.find({ role: 'deliveryman' }).toArray();
-        //         const deliveryMen = await userCollection.aggregate([
-        //             {
-        //                 $match: { role: 'deliveryman' } // Ensure we only get deliverymen
-        //             },
-            
-
-        //             {
-        //                 $addFields: {
-        //                   _id: { $toString: '$_id' }, //convert plantId string field to objectId field
-                   
-
-                        
-        //                 },
-        //               },
-                      
-        //             {
-        //                 $lookup: {
-        //                     from: 'book', // Ensure this matches the actual collection name
-        //                     localField: '_id',
-        //                     foreignField: 'deliveryMan_Id', // Ensure this matches the field in the book collection
-        //                     as: 'books'
-        //                 }
-        //             },
-        //             {
-        //                 $lookup: {
-        //                     from: 'review', // Ensure this matches the actual collection name
-        //                     localField: '_id',
-        //                     foreignField: 'deliveryManID', // Ensure this matches the field in the review collection
-        //                     as: 'reviews'
-        //                 }
-        //             },
-        //             {
-        //                 $unwind: '$books'
-        //             },
-        //             {
-        //                $unwind: '$reviews'
-        //             },
-        //             {
-        //                 $addFields: {
-        //                     phone: '$books.phone',
-        //                     price: '$books.price',
-        //                     ratings: { $avg: { $toDouble: '$reviews.ratings' } } ,
-        //                     feedBack: '$reviews.feedBack',
-        //                     books: '$books'
-        //                 }
-        //             },
-        //             {
-        //                 $project: {
-        //                     phone: 1,
-        //                     price: 1, // Ensure this field exists in the user collection
-        //                     ratings: { $round: ['$ratings', 1] },
-        //                     feedBack: 1,
-        //                     books:1
-        //                 }
-        //             }
-        //         ]).toArray();
-        
-        //         res.send({
-                    
-        //             users,
-        //             deliveryMen,
-                
-        //         });
-        //     } catch (error) {
-        //         console.error('Aggregation error:', error); // Log the error for debugging
-        //         res.status(500).json({ message: 'Server error' });
-        //     }
-        // });
-
-        app.get('/api/deliverymen', async (req, res) => {
+             app.get('/api/deliverymen', verifyToken, async (req, res) => {
             try {
                 // const users = await userCollection.find({ role: 'deliveryman' }).toArray();
                 const deliveryMen = await userCollection.aggregate([
@@ -549,7 +475,7 @@ async function run() {
 
 
         // bar chart data
-        app.get('/api/bookings-by-date', async (req, res) => {
+        app.get('/api/bookings-by-date', verifyToken, async (req, res) => {
             try {
                 const bookings = await bookCollection.aggregate([
                     {
@@ -572,7 +498,7 @@ async function run() {
        
 
         // line chart
-        app.get('/api/bookings-and-deliveries-by-date', async (req, res) => {
+        app.get('/api/bookings-and-deliveries-by-date', verifyToken, async (req, res) => {
             try {
                 const bookings = await bookCollection.aggregate([
                     {
@@ -602,7 +528,7 @@ async function run() {
 
 
 
-        app.get('/api/users-with-bookings', async (req, res) => {
+        app.get('/api/users-with-bookings', verifyToken, verifyAdmin, async (req, res) => {
             try {
                 const users = await userCollection.aggregate([
                     {
