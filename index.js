@@ -127,6 +127,25 @@ async function run() {
 
 
 
+
+
+
+        app.get('/users/email/:email', verifyToken, async (req, res) => {
+            const email = req.params.email;
+            try {
+                const result = await userCollection.findOne({ email: email }); // Use findOne instead of find().toArray()
+                res.send(result);
+            } catch (error) {
+                console.error('Error fetching user by email:', error);
+                res.status(500).send('Internal Server Error');
+            }
+        });
+
+
+
+
+
+
         app.get('/users/admin/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
 
@@ -221,19 +240,32 @@ async function run() {
 
 
         // image upload update
-        app.patch('/users/:id', verifyToken, async (req, res) => {
-            const item = req.body;
-            const id = req.params.id;
-            const filter = { _id: new ObjectId(id) }
-            const updatedDoc = {
-                $set: {
-                    image: item.image
-                }
-            }
 
-            const result = await userCollection.updateOne(filter, updatedDoc)
-            res.send(result);
-        })
+
+
+        app.patch('/users/imgUpload/:email', verifyToken, async (req, res) => {
+            const { image } = req.body;  // Extract image URL from request body
+            const email = req.params.email;  // Get email from route params
+
+            try {
+                const filter = { email: email };  // Match user by email
+                const updatedDoc = {
+                    $set: { image2: image }  // Store new image URL in `image2`
+                };
+
+                const result = await userCollection.updateOne(filter, updatedDoc);
+
+                if (result.modifiedCount > 0) {
+                    res.send({ success: true, message: "Image updated successfully" });
+                } else {
+                    res.status(404).send({ success: false, message: "User not found or no changes made" });
+                }
+            } catch (error) {
+                console.error("Error updating user image:", error);
+                res.status(500).send({ success: false, message: "Internal Server Error" });
+            }
+        });
+
 
 
 
@@ -252,7 +284,7 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/book/email/:email',  verifyToken,async (req, res) => {
+        app.get('/book/email/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
             try {
                 const result = await bookCollection.find({ email: email }).toArray();
@@ -278,9 +310,9 @@ async function run() {
             const result = await bookCollection.findOne(query);
             res.send(result);
         })
-        
 
-        app.put('/book/:id', verifyToken,async (req, res) => {
+
+        app.put('/book/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
 
             // https://www.mongodb.com/docs/drivers/node/current/usage-examples/updateOne/
@@ -391,24 +423,24 @@ async function run() {
 
         // aggregation
 
-             app.get('/api/deliverymen', verifyToken, async (req, res) => {
+        app.get('/api/deliverymen', verifyToken, async (req, res) => {
             try {
                 // const users = await userCollection.find({ role: 'deliveryman' }).toArray();
                 const deliveryMen = await userCollection.aggregate([
                     {
                         $match: { role: 'deliveryman' } // Ensure we only get deliverymen
                     },
-            
+
 
                     {
                         $addFields: {
-                          _id: { $toString: '$_id' }, //convert plantId string field to objectId field
-                   
+                            _id: { $toString: '$_id' }, //convert plantId string field to objectId field
 
-                        
+
+
                         },
-                      },
-                      
+                    },
+
                     {
                         $lookup: {
                             from: 'book', // Ensure this matches the actual collection name
@@ -417,24 +449,24 @@ async function run() {
                             as: 'books'
                         }
                     },
-                   
+
 
                     {
                         $project: {
-                          name: 1, // Assuming deliveryBoy has a 'name' field
-                          email: 1,
-                          phone: 1,
-                          deliveredCount: {
-                            $size: {
-                              $filter: {
-                                input: "$books",
-                                as: "booking",
-                                cond: { $eq: ["$$booking.status", "delivered"] }
-                              }
+                            name: 1, // Assuming deliveryBoy has a 'name' field
+                            email: 1,
+                            phone: 1,
+                            deliveredCount: {
+                                $size: {
+                                    $filter: {
+                                        input: "$books",
+                                        as: "booking",
+                                        cond: { $eq: ["$$booking.status", "delivered"] }
+                                    }
+                                }
                             }
-                          }
                         }
-                      },
+                    },
 
                     {
                         $lookup: {
@@ -447,25 +479,25 @@ async function run() {
 
                     {
                         $project: {
-                          name: 1, // Assuming deliveryBoy has a 'name' field
-                          email: 1,
-                          phone: 1,
-                          deliveredCount: 1,
-                          averageRating: {
-                            $avg: {
-                              $map: {
-                                input: "$reviews",
-                                as: "review",
-                                in: { $toDouble: "$$review.ratings" } // Convert string to number
-                              }
+                            name: 1, // Assuming deliveryBoy has a 'name' field
+                            email: 1,
+                            phone: 1,
+                            deliveredCount: 1,
+                            averageRating: {
+                                $avg: {
+                                    $map: {
+                                        input: "$reviews",
+                                        as: "review",
+                                        in: { $toDouble: "$$review.ratings" } // Convert string to number
+                                    }
+                                }
                             }
-                          }
                         }
-                      },
+                    },
 
 
                 ]).toArray();
-        
+
                 res.send(deliveryMen);
             } catch (error) {
                 console.error('Aggregation error:', error); // Log the error for debugging
@@ -488,14 +520,14 @@ async function run() {
                         $sort: { _id: 1 } // Sort by date
                     }
                 ]).toArray();
-        
+
                 res.json(bookings);
             } catch (error) {
                 console.error('Error fetching bookings by date:', error);
                 res.status(500).json({ message: 'Server error' });
             }
         });
-       
+
 
         // line chart
         app.get('/api/bookings-and-deliveries-by-date', verifyToken, async (req, res) => {
@@ -516,7 +548,7 @@ async function run() {
                         $sort: { _id: 1 } // Sort by date
                     }
                 ]).toArray();
-        
+
                 res.json(bookings);
             } catch (error) {
                 console.error('Error fetching bookings and deliveries by date:', error);
@@ -554,14 +586,14 @@ async function run() {
                         }
                     }
                 ]).toArray();
-        
+
                 res.send(users);
             } catch (error) {
                 console.error('Aggregation error:', error);
                 res.status(500).json({ message: 'Server error' });
             }
         });
-        
+
 
 
     } finally {
@@ -572,7 +604,7 @@ async function run() {
 run().catch(console.dir);
 
 app.get('/', (req, res) => {
-    res.send('Yaaaa!, You Have done well!!!! ')
+    res.send('Yaaaa!, You Have done well ha ha!!!! ')
 })
 
 
