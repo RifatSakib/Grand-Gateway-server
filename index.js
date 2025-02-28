@@ -126,6 +126,10 @@ async function run() {
         });
 
 
+        app.get('/users/all',  async (req, res) => {
+            const result = await userCollection.find().toArray();
+            res.send(result);
+        });
 
 
 
@@ -301,7 +305,20 @@ async function run() {
             console.log(result)
             res.send(result);
         });
+        
+        // public route for banner total num of booked items
+        app.get('/book/all/forbanner', async (req, res) => {
+            const result = await bookCollection.find().toArray();
+            console.log(result.length)
+            res.send(result);
+        });
 
+
+        app.get('/book/all/forbanner/delivered', async (req, res) => {
+            const result = await bookCollection.find({status:"delivered"}).toArray();
+            console.log(result.length)
+            res.send(result);
+        });
 
 
         app.get('/book/:id', verifyToken, async (req, res) => {
