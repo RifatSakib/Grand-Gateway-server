@@ -99,11 +99,6 @@ async function run() {
 
 
 
-        // app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
-        //     const result = await userCollection.find().toArray();
-        //     res.send(result);
-        // });
-
 
         app.post('/users', async (req, res) => {
             const user = req.body;
@@ -126,9 +121,14 @@ async function run() {
         });
 
 
-        app.get('/users/all',  async (req, res) => {
-            const result = await userCollection.find().toArray();
-            res.send(result);
+        app.get('/users/all', async (req, res) => {
+            try {
+                const count = await userCollection.estimatedDocumentCount();
+                res.send({ count });  // Return as an object, not just a number
+            } catch (error) {
+                console.error('Error fetching user count:', error);
+                res.status(500).send({ error: 'Internal Server Error' });
+            }
         });
 
 
@@ -302,22 +302,29 @@ async function run() {
 
         app.get('/book/all', verifyToken, verifyAdmin, async (req, res) => {
             const result = await bookCollection.find().toArray();
-            console.log(result)
             res.send(result);
         });
         
         // public route for banner total num of booked items
         app.get('/book/all/forbanner', async (req, res) => {
-            const result = await bookCollection.find().toArray();
-            console.log(result.length)
-            res.send(result);
+            try {
+                const count = await bookCollection.estimatedDocumentCount();
+                res.send({ count });  // Return as an object, not just a number
+            } catch (error) {
+                console.error('Error fetching user count:', error);
+                res.status(500).send({ error: 'Internal Server Error' });
+            }
         });
 
 
         app.get('/book/all/forbanner/delivered', async (req, res) => {
-            const result = await bookCollection.find({status:"delivered"}).toArray();
-            console.log(result.length)
-            res.send(result);
+            try {
+                const count = await bookCollection.countDocuments({ status: "delivered" }); // ✅ Correct way to count filtered docs
+                res.send({ count }); // ✅ Send response as an object
+            } catch (error) {
+                console.error('Error fetching delivered book count:', error);
+                res.status(500).send({ error: 'Internal Server Error' });
+            }
         });
 
 
@@ -341,7 +348,7 @@ async function run() {
             }
 
             const result = await bookCollection.updateOne(filter, updatedDoc, options)
-            console.log(result)
+            // console.log(result)
             res.send(result);
         })
 
@@ -349,7 +356,7 @@ async function run() {
 
         app.get('/book/AllBookByDeliveryId/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
-            console.log(id);
+            // console.log(id);
             try {
                 const result = await bookCollection.find({ deliveryMan_Id: id }).toArray();
                 if (result) {
@@ -392,7 +399,7 @@ async function run() {
         app.patch('/book/cancel/:id', verifyToken, async (req, res) => {
             // const item = req.body;
             const id = req.params.id;
-            console.log(id)
+            // console.log(id)
             const filter = { _id: new ObjectId(id) }
             const updatedDoc = {
                 $set: { status: "canceled" }
@@ -407,7 +414,7 @@ async function run() {
         app.patch('/book/deliver/:id', verifyToken, async (req, res) => {
             // const item = req.body;
             const id = req.params.id;
-            console.log(id)
+            // console.log(id)
             const filter = { _id: new ObjectId(id) }
             const updatedDoc = {
                 $set: { status: "delivered" }
@@ -604,6 +611,7 @@ async function run() {
                     }
                 ]).toArray();
 
+                console.log(users);
                 res.send(users);
             } catch (error) {
                 console.error('Aggregation error:', error);
