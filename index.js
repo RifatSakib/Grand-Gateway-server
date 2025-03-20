@@ -195,7 +195,7 @@ async function run() {
 
 
         // for deliveryman
-        app.get('/users/deliveryman/:email', verifyToken, async (req, res) => {
+        app.get('/users/deliverymanrelod/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
 
             if (email !== req.decoded.email) {
@@ -208,6 +208,7 @@ async function run() {
             if (user) {
                 deliveryman = user?.role === 'deliveryman';
             }
+            console.log("testing deliveryman",deliveryman);
             res.send({ deliveryman });
         })
         
